@@ -1,0 +1,23 @@
+create layout folder in views
+then create app.blade.php and navigation.blade.php in layouts
+bootstap ko code liye for app.blade.php ani navigation ma login ra register ko code lekhe welcome.blade bata
+ani tyo app.blADE.php ma include garyo, teapchi @yeild('content') halyo
+
+@yeild('content')
+In Blade, Laravel's templating engine, @yield is used to define a section of content that can be replaced by child views. When you create a layout (like the one you've shown), you can use @yield to specify where the content from child views should be inserted.
+
+For example, in your layout:
+
+<body>
+    @include('layout.navigation')
+    @yield('content')
+</body>
+The @yield('content') directive acts as a placeholder. In a child view, you would use @section to define the content for that section:
+
+@extends('layout.master')
+
+@section('content')
+    <h1>This is the child view content!</h1>
+@endsection
+When this child view is rendered, the content inside the @section('content') will replace the @yield('content') in the layout. This allows for a flexible and reusable structure in your Blade templates.
+
