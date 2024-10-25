@@ -25,3 +25,8 @@ Route::get('/profile', function () {
 })->middleware('auth')->name('profile');
 
 Route::get('/profile/edit', [AuthController::class, 'editProfile'])->name('edit.profile');
+
+// Handle profile update request
+Route::post('/update/profile', [AuthController::class, 'updateProfile'])->name('update.profile');
+
+Route::get('/profile', [AuthController::class, 'profile'])->name('profile');

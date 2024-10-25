@@ -4,78 +4,97 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
+    // Show the login form
     public function index()
     {
         return view('auth.login');
     }
 
+    // Handle the login request
     public function login(Request $request)
     {
-        // Validate data
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        // Attempt to log the user in
-        if (\Auth::attempt($credentials)) {
-            // Redirect to the user profile instead of home
-            return redirect()->route('edit.profile'); // Adjust this route if necessary
+        if (Auth::attempt($credentials)) {
+            return redirect()->route('profile');
         }
 
-        // If login fails, return with error message
-        return redirect('login')->withError('Login details are not valid');
+        return redirect()->route('login')->withErrors(['Login details are not valid']);
     }
 
+    // Show the registration form
     public function register_view()
     {
         return view('auth.register');
     }
 
+    // Handle the registration request
     public function register(Request $request)
     {
-        // Validate registration inputs
         $request->validate([
             'name' => 'required',
-            'email' => 'required|unique:users|email',
+            'email' => 'required|email|unique:users',
             'password' => 'required|confirmed',
         ]);
 
-        // Create the user in the database
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        // Automatically log in the user after registration
-        if (\Auth::attempt($request->only('email', 'password'))) {
-            // Redirect to the user profile after registration
-            return redirect()->route('edit.profile'); // Adjust this route if necessary
+        if (Auth::attempt($request->only('email', 'password'))) {
+            return redirect()->route('profile');
         }
 
-        // If registration fails, return with error message
-        return redirect('register')->withError('Error in registration process');
+        return redirect()->route('register')->withErrors(['Registration failed']);
     }
 
-    public function editProfile()
+    // Show the profile view
+    public function profile()
     {
-        return view('auth.profile'); // Ensure you have this view file
+        return view('auth.profile');
     }
 
-    public function home()
+    // Handle the profile update with image upload
+    public function updateProfile(Request $request)
     {
-        return view('home');
+        $request->validate([
+            'profile_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $user = Auth::user();
+
+        // Handle image upload
+        if ($request->hasFile('profile_image')) {
+            $imagePath = $request->file('profile_image')->store('profile_images', 'public');
+
+            // Delete old image if exists
+            if ($user->profile_image) {
+                Storage::delete('public/' . $user->profile_image);
+            }
+
+            $user->profile_image = $imagePath;
+        }
+
+        $user->save();
+
+        return redirect()->route('profile')->with('success', 'Profile updated successfully!');
     }
 
+    // Handle logout
     public function logout()
     {
-        \Session::flush(); // Remove all sessions
-        \Auth::logout();   // Log out the user
-        return redirect('login'); // Redirect to login page
+        Auth::logout();
+        return redirect()->route('login');
     }
 }
